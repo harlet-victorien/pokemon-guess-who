@@ -1,13 +1,13 @@
 "use client"
 
 import Image from "next/image"
+import type { Language } from "@/lib/translations"
 import { TypeIcon } from "@/components/TypeIcon"
 import { useSettings } from "@/contexts/SettingsContext"
-import { useLanguage } from "@/contexts/LanguageContext" // Added import for useLanguage
 
 interface PokemonCardProps {
   id: number
-  name: string
+  names: Record<Language, string>
   sprite: string
   types: string[]
   generation: number
@@ -16,17 +16,18 @@ interface PokemonCardProps {
   onFlip: () => void
 }
 
-export function PokemonCard({ 
-  id, 
-  name, 
-  sprite, 
-  types, 
-  generation, 
-  evolutionStage, 
-  flipped, 
-  onFlip 
+export function PokemonCard({
+  id,
+  names,
+  sprite,
+  types,
+  generation,
+  evolutionStage,
+  flipped,
+  onFlip
 }: PokemonCardProps) {
-  const { t } = useSettings() // useLanguage is now correctly imported and used
+  const { t, language } = useSettings()
+  const displayName = names[language]
 
   const getEvolutionStageName = (stage: number): string => {
     switch (stage) {
@@ -55,7 +56,7 @@ export function PokemonCard({
             : "hover:scale-105 hover:shadow-md cursor-pointer"
           }
         `}
-        aria-label={`${name}${flipped ? " (eliminated)" : ""}`}
+        aria-label={`${displayName}${flipped ? " (eliminated)" : ""}`}
       >
         <div className="absolute top-1 right-1 flex flex-col gap-0.5 z-20">
           {types.map((type) => (
@@ -70,7 +71,7 @@ export function PokemonCard({
         <div className="relative w-3/4 aspect-square z-0">
           <Image
             src={sprite || "/placeholder.svg"}
-            alt={name}
+            alt={displayName}
             fill
             className={`object-contain pixelated ${flipped ? "grayscale" : ""}`}
             unoptimized
@@ -78,7 +79,7 @@ export function PokemonCard({
         </div>
         
         <span className={`text-xs font-medium capitalize mt-1 truncate w-full px-1 text-center z-0 ${flipped ? "text-muted-foreground" : "text-foreground"}`}>
-          {name}
+          {displayName}
         </span>
         <span className={`text-[10px] z-0 ${flipped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
           #{id}

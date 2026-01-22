@@ -6,7 +6,6 @@ import { TypeLegend } from "@/components/TypeLegend"
 import { generatePokemonIds } from "@/lib/rng"
 import { fetchAllPokemon } from "@/lib/pokemon"
 import { useSettings } from "@/contexts/SettingsContext"
-import { useLanguage } from "@/contexts/LanguageContext" // Import useLanguage from LanguageContext
 import type { Pokemon } from "@/types"
 
 interface BoardProps {
@@ -85,7 +84,7 @@ export function Board({ seed, players }: BoardProps) {
           <PokemonCard
             key={p.id}
             id={p.id}
-            name={p.name}
+            names={p.names}
             sprite={p.sprite}
             types={p.types}
             generation={p.generation}

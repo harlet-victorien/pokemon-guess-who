@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/translations"
+
 export interface Room {
   players: string[]
   seed: number | null
@@ -8,6 +10,7 @@ export interface Room {
 export interface Pokemon {
   id: number
   name: string
+  names: Record<Language, string>
   sprite: string
   types: string[]
   generation: number

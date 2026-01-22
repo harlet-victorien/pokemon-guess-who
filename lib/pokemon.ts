@@ -1,5 +1,6 @@
 import type { Pokemon } from "@/types"
 import { getGeneration, getEvolutionStage } from "@/lib/evolution"
+import { pokemonNames } from "@/lib/pokemon-names"
 
 interface PokeAPIResponse {
   id: number
@@ -28,6 +29,7 @@ export async function fetchPokemon(id: number, retries: number = 1): Promise<Pok
       return {
         id: data.id,
         name: data.name,
+        names: pokemonNames[data.id] || { en: data.name, fr: data.name },
         sprite: data.sprites.front_default || `/placeholder.svg?text=${data.name}`,
         types: data.types.map((t) => t.type.name),
         generation: getGeneration(data.id),
