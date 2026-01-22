@@ -2,8 +2,10 @@
 
 import { typeColors } from "@/lib/type-colors"
 import { TypeIcon } from "@/components/TypeIcon"
+import { useSettings } from "@/contexts/SettingsContext"
 
 export function TypeLegend() {
+  const { t } = useSettings()
   const types = Object.keys(typeColors)
 
   return (
@@ -21,7 +23,7 @@ export function TypeLegend() {
         ))}
       </div>
       <p className="text-xs text-muted-foreground">
-        Hover a card to see Generation and Evolution Stage
+        {t("hoverHint")}
       </p>
     </div>
   )

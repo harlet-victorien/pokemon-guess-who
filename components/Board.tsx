@@ -5,6 +5,8 @@ import { PokemonCard } from "@/components/PokemonCard"
 import { TypeLegend } from "@/components/TypeLegend"
 import { generatePokemonIds } from "@/lib/rng"
 import { fetchAllPokemon } from "@/lib/pokemon"
+import { useSettings } from "@/contexts/SettingsContext"
+import { useLanguage } from "@/contexts/LanguageContext" // Import useLanguage from LanguageContext
 import type { Pokemon } from "@/types"
 
 interface BoardProps {
@@ -13,6 +15,7 @@ interface BoardProps {
 }
 
 export function Board({ seed, players }: BoardProps) {
+  const { t, gridLayout } = useSettings() // Use the imported useLanguage
   const [pokemon, setPokemon] = useState<Pokemon[]>([])
   const [flippedIds, setFlippedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -25,19 +28,19 @@ export function Board({ seed, players }: BoardProps) {
         const pokemonData = await fetchAllPokemon(ids)
         
         if (pokemonData.length < 40) {
-          setError(`Only loaded ${pokemonData.length}/40 Pokemon. Some may not display.`)
+          setError(t("partialLoad").replace("{count}", String(pokemonData.length)))
         }
         
         setPokemon(pokemonData)
       } catch {
-        setError("Failed to load Pokemon data")
+        setError(t("loadError"))
       } finally {
         setLoading(false)
       }
     }
 
     loadPokemon()
-  }, [seed])
+  }, [seed, t])
 
   const handleFlip = (id: number) => {
     setFlippedIds((prev) => {
@@ -55,7 +58,7 @@ export function Board({ seed, players }: BoardProps) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
         <div className="size-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-        <p className="text-muted-foreground">Loading Pokemon...</p>
+        <p className="text-muted-foreground">{t("loadingPokemon")}</p>
       </div>
     )
   }
@@ -64,11 +67,11 @@ export function Board({ seed, players }: BoardProps) {
     <div className="flex flex-col gap-4 w-full">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Playing:</span>
+          <span className="text-sm text-muted-foreground">{t("playing")}</span>
           <span className="font-medium">{players.join(" vs ")}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Remaining:</span>
+          <span className="text-sm text-muted-foreground">{t("remaining")}</span>
           <span className="font-medium">{pokemon.length - flippedIds.size}/{pokemon.length}</span>
         </div>
       </div>
@@ -77,7 +80,7 @@ export function Board({ seed, players }: BoardProps) {
         <p className="text-sm text-amber-600 text-center">{error}</p>
       )}
       
-      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 gap-2">
+      <div className={`grid gap-2 ${gridLayout === "8x5" ? "grid-cols-4 sm:grid-cols-5 md:grid-cols-8" : "grid-cols-4 sm:grid-cols-5"}`}>
         {pokemon.map((p) => (
           <PokemonCard
             key={p.id}
@@ -96,7 +99,7 @@ export function Board({ seed, players }: BoardProps) {
       <TypeLegend />
       
       <p className="text-xs text-center text-muted-foreground">
-        Click on a Pokemon to mark it as eliminated. Coordinate with your opponent verbally!
+        {t("eliminationHint")}
       </p>
     </div>
   )

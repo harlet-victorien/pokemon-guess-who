@@ -2,6 +2,8 @@
 
 import Image from "next/image"
 import { TypeIcon } from "@/components/TypeIcon"
+import { useSettings } from "@/contexts/SettingsContext"
+import { useLanguage } from "@/contexts/LanguageContext" // Added import for useLanguage
 
 interface PokemonCardProps {
   id: number
@@ -14,12 +16,6 @@ interface PokemonCardProps {
   onFlip: () => void
 }
 
-const stageLabels: Record<number, string> = {
-  1: "Basic",
-  2: "Stage 1",
-  3: "Stage 2",
-}
-
 export function PokemonCard({ 
   id, 
   name, 
@@ -30,6 +26,21 @@ export function PokemonCard({
   flipped, 
   onFlip 
 }: PokemonCardProps) {
+  const { t } = useSettings() // useLanguage is now correctly imported and used
+
+  const getEvolutionStageName = (stage: number): string => {
+    switch (stage) {
+      case 1:
+        return t("basic")
+      case 2:
+        return t("stage1")
+      case 3:
+        return t("stage2")
+      default:
+        return t("basic")
+    }
+  }
+
   return (
     <div className="relative group">
       <button
@@ -46,7 +57,6 @@ export function PokemonCard({
         `}
         aria-label={`${name}${flipped ? " (eliminated)" : ""}`}
       >
-        {/* Type icons - top right */}
         <div className="absolute top-1 right-1 flex flex-col gap-0.5 z-20">
           {types.map((type) => (
             <TypeIcon key={type} type={type} size={14} showTooltip={false} />
@@ -75,7 +85,6 @@ export function PokemonCard({
         </span>
       </button>
 
-      {/* Info tooltip - shows on hover, positioned outside the card */}
       {!flipped && (
         <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-foreground text-background text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-[100] flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -84,7 +93,7 @@ export function PokemonCard({
             ))}
             <span className="capitalize">{types.join(" / ")}</span>
           </div>
-          <span>Gen {generation} - {stageLabels[evolutionStage] || "Basic"}</span>
+          <span>{t("generation")} {generation} - {getEvolutionStageName(evolutionStage)}</span>
         </div>
       )}
     </div>
