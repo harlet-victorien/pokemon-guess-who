@@ -44,7 +44,7 @@ export function TypeIcon({ type, size = 16, showTooltip = true }: TypeIconProps)
         <path d={path} />
       </svg>
       {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap capitalize z-50">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-foreground text-background text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap capitalize z-[100]">
           {type}
         </div>
       )}
