@@ -24,6 +24,7 @@ export async function POST(
       // Create new room
       room = {
         players: [name],
+        maxPlayers: 4,
         seed: null,
         started: false,
         createdAt: Date.now(),
@@ -32,7 +33,7 @@ export async function POST(
       return NextResponse.json({ success: true, room })
     }
 
-    if (room.players.length >= 2) {
+    if (room.players.length >= room.maxPlayers) {
       return NextResponse.json(
         { success: false, error: "Room is full" },
         { status: 400 }
@@ -44,12 +45,10 @@ export async function POST(
       return NextResponse.json({ success: true, room })
     }
 
-    // Add second player and start game
+    // Add player to room
     const updatedRoom: Room = {
       ...room,
       players: [...room.players, name],
-      seed: Date.now(),
-      started: true,
     }
     await setRoom(code, updatedRoom)
 

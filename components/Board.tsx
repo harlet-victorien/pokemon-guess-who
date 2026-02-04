@@ -67,7 +67,7 @@ export function Board({ seed, players }: BoardProps) {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-2">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{t("playing")}</span>
-          <span className="font-medium">{players.join(" vs ")}</span>
+          <span className="font-medium">{players.join(", ")}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{t("remaining")}</span>

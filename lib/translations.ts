@@ -27,6 +27,9 @@ export const translations = {
     players: "Players",
     waiting: "Waiting...",
     waitingForPlayer: "Waiting for another player to join...",
+    waitingForHost: "Waiting for host to start the game...",
+    startGame: "Start Game",
+    starting: "Starting...",
     
     // Game page
     leaveGame: "Leave Game",
@@ -89,6 +92,9 @@ export const translations = {
     players: "Joueurs",
     waiting: "En attente...",
     waitingForPlayer: "En attente d'un autre joueur...",
+    waitingForHost: "En attente que l'hote demarre la partie...",
+    startGame: "Demarrer la partie",
+    starting: "Demarrage...",
     
     // Game page
     leaveGame: "Quitter la Partie",

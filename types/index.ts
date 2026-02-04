@@ -2,6 +2,7 @@ import type { Language } from "@/lib/translations"
 
 export interface Room {
   players: string[]
+  maxPlayers: number
   seed: number | null
   started: boolean
   createdAt: number

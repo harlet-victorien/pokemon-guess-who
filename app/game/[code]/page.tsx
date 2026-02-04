@@ -22,6 +22,14 @@ export default function GamePage({ params }: GamePageProps) {
   const [gameState, setGameState] = useState<GameState>("loading")
   const [room, setRoom] = useState<Room | null>(null)
   const [error, setError] = useState("")
+  const [playerName, setPlayerName] = useState("")
+
+  useEffect(() => {
+    const name = sessionStorage.getItem("playerName")
+    if (name) {
+      setPlayerName(name)
+    }
+  }, [])
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout | null = null
@@ -95,7 +103,12 @@ export default function GamePage({ params }: GamePageProps) {
         <div className="absolute top-4 right-4">
           <SettingsMenu />
         </div>
-        <Lobby players={room.players} roomCode={code} />
+        <Lobby
+          players={room.players}
+          roomCode={code}
+          maxPlayers={room.maxPlayers}
+          currentPlayerName={playerName}
+        />
       </main>
     )
   }
