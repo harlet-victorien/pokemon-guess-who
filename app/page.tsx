@@ -1,6 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { JoinForm } from "@/components/JoinForm"
+import { Button } from "@/components/ui/button"
 import { SettingsMenu } from "@/components/SettingsMenu"
 import { useSettings } from "@/contexts/SettingsContext"
 
@@ -22,6 +24,16 @@ export default function Home() {
           </p>
         </div>
         <JoinForm />
+        <div className="w-full flex flex-col items-center gap-2">
+          <div className="flex items-center gap-3 w-full max-w-xs">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground uppercase">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <Button variant="outline" size="lg" asChild className="w-full max-w-xs">
+            <Link href="/solo">{t("soloPlay")}</Link>
+          </Button>
+        </div>
         <p className="text-xs text-center text-muted-foreground max-w-sm">
           {t("gameDescription")}
         </p>
