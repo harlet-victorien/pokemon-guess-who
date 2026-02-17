@@ -14,9 +14,10 @@ interface SoloBoardProps {
   phase: string
   onGuess: (pokemonId: number) => void
   guessing: boolean
+  canGuess: boolean
 }
 
-export function SoloBoard({ pokemon, flippedIds, onFlip, humanSecretId, phase, onGuess, guessing }: SoloBoardProps) {
+export function SoloBoard({ pokemon, flippedIds, onFlip, humanSecretId, phase, onGuess, guessing, canGuess }: SoloBoardProps) {
   const { t, language, gridLayout } = useSettings()
 
   const isPlaying = phase === "human_turn" || phase === "ai_turn"
@@ -51,7 +52,7 @@ export function SoloBoard({ pokemon, flippedIds, onFlip, humanSecretId, phase, o
               flipped={flippedIds.has(p.id)}
               onFlip={() => onFlip(p.id)}
             />
-            {isPlaying && phase === "human_turn" && !flippedIds.has(p.id) && p.id !== humanSecretId && (
+            {isPlaying && phase === "human_turn" && canGuess && !flippedIds.has(p.id) && p.id !== humanSecretId && (
               <Button
                 size="sm"
                 variant="destructive"

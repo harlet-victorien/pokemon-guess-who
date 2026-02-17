@@ -37,6 +37,7 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
   const [aiSecretId, setAiSecretId] = useState<number | null>(null)
   const [humanSecretId, setHumanSecretId] = useState<number | null>(null)
   const [flippedIds, setFlippedIds] = useState<Set<number>>(new Set())
+  const [aiCandidates, setAiCandidates] = useState<Set<number>>(new Set())
   const [error, setError] = useState("")
 
   const [pickingLoading, setPickingLoading] = useState(false)
@@ -45,6 +46,7 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
   const [asking, setAsking] = useState(false)
   const [guessing, setGuessing] = useState(false)
   const [pendingAiQuestion, setPendingAiQuestion] = useState(false)
+  const [humanAskedThisTurn, setHumanAskedThisTurn] = useState(false)
 
   // Load pokemon from sessionStorage
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
       setPhase(data.phase)
       setTurnNumber(data.turn_number)
       setAiRemainingCount(data.ai_remaining_count)
+      if (data.ai_candidates) setAiCandidates(new Set(data.ai_candidates))
       setChatHistory(data.chat_history || [])
       if (data.winner) setWinner(data.winner)
       if (data.ai_secret_id) setAiSecretId(data.ai_secret_id)
@@ -82,15 +85,25 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
   const triggerAiTurn = useCallback(async () => {
     setAiTurnLoading(true)
     setPhase("ai_turn")
+    setHumanAskedThisTurn(false)
     try {
       const res = await fetch(`/api/solo/${sessionId}/ai-turn`, { method: "POST" })
       const data = await res.json()
       setChatHistory(data.chat_history || [])
+      if (data.ai_candidates) setAiCandidates(new Set(data.ai_candidates))
 
       if (data.action === "guess") {
-        setWinner(data.guess_correct ? aiName : (sessionStorage.getItem("soloPlayerName") || "You"))
-        setPhase("game_over")
-        await refreshState()
+        if (data.guess_correct) {
+          setWinner(aiName)
+          setPhase("game_over")
+          await refreshState()
+        } else {
+          // AI guessed wrong: cross out that pokemon, continue to human turn
+          if (data.guess_id) {
+            setFlippedIds((prev) => new Set(prev).add(data.guess_id))
+          }
+          await refreshState()
+        }
       } else if (data.action === "question") {
         setPendingAiQuestion(true)
         await refreshState()
@@ -136,7 +149,9 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
       const data = await res.json()
       setChatHistory(data.chat_history || [])
       setAiRemainingCount(data.ai_remaining_count)
+      if (data.ai_candidates) setAiCandidates(new Set(data.ai_candidates))
       setPendingAiQuestion(false)
+      setHumanAskedThisTurn(false)
       // Server sets phase to human_turn after elimination
       await refreshState()
     } catch {
@@ -146,7 +161,7 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
     }
   }, [sessionId, refreshState])
 
-  // Ask a question (human turn)
+  // Ask a question (human turn) — one question per turn
   const handleAskQuestion = useCallback(async (question: string) => {
     setAsking(true)
     try {
@@ -157,33 +172,13 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
       })
       const data = await res.json()
       setChatHistory(data.chat_history || [])
+      setHumanAskedThisTurn(true)
     } catch {
       setError("Failed to ask question")
     } finally {
       setAsking(false)
     }
   }, [sessionId])
-
-  // Guess AI's pokemon (human turn)
-  const handleGuess = useCallback(async (pokemonId: number) => {
-    setGuessing(true)
-    try {
-      const res = await fetch(`/api/solo/${sessionId}/human-guess`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pokemon_id: pokemonId }),
-      })
-      const data = await res.json()
-      setChatHistory(data.chat_history || [])
-      setAiSecretId(data.ai_secret_id)
-      setWinner(data.correct ? (sessionStorage.getItem("soloPlayerName") || "You") : aiName)
-      setPhase("game_over")
-    } catch {
-      setError("Failed to guess")
-    } finally {
-      setGuessing(false)
-    }
-  }, [sessionId, aiName])
 
   // End human turn → tell server → trigger AI turn
   const handleEndTurn = useCallback(async () => {
@@ -194,6 +189,34 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
       setError("Failed to end turn")
     }
   }, [sessionId, triggerAiTurn])
+
+  // Guess AI's pokemon (human turn) — ends the turn on wrong guess
+  const handleGuess = useCallback(async (pokemonId: number) => {
+    setGuessing(true)
+    try {
+      const res = await fetch(`/api/solo/${sessionId}/human-guess`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pokemon_id: pokemonId }),
+      })
+      const data = await res.json()
+      setChatHistory(data.chat_history || [])
+
+      if (data.correct) {
+        setAiSecretId(data.ai_secret_id)
+        setWinner(sessionStorage.getItem("soloPlayerName") || "You")
+        setPhase("game_over")
+      } else {
+        // Wrong guess: cross out the pokemon, lock guessing for rest of turn
+        setFlippedIds((prev) => new Set(prev).add(pokemonId))
+        setHumanAskedThisTurn(true)
+      }
+    } catch {
+      setError("Failed to guess")
+    } finally {
+      setGuessing(false)
+    }
+  }, [sessionId])
 
   const handleFlip = (id: number) => {
     setFlippedIds((prev) => {
@@ -272,13 +295,6 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
           winner={winner}
         />
 
-        {aiTurnLoading && (
-          <div className="flex items-center gap-2 mt-3 px-4 py-2 bg-muted/50 rounded-lg">
-            <div className="size-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            <span className="text-sm text-muted-foreground">{t("soloAiThinking")}</span>
-          </div>
-        )}
-
         <div className="mt-4 flex flex-col lg:flex-row gap-4">
           <div className="flex-1 min-w-0">
             <SoloBoard
@@ -289,9 +305,10 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
               phase={phase}
               onGuess={handleGuess}
               guessing={guessing}
+              canGuess={!humanAskedThisTurn}
             />
           </div>
-          <div className="lg:w-80 h-[500px] lg:h-auto">
+          <div className="lg:w-80 h-[400px] lg:h-[600px]">
             <ChatPanel
               messages={chatHistory}
               phase={phase}
@@ -302,6 +319,11 @@ export default function SoloGamePage({ params }: SoloGamePageProps) {
               answering={answering}
               asking={asking}
               pendingAiQuestion={pendingAiQuestion}
+              humanAskedThisTurn={humanAskedThisTurn}
+              aiThinking={aiTurnLoading}
+              aiProcessing={answering}
+              pokemon={pokemon}
+              aiCandidates={aiCandidates}
             />
           </div>
         </div>

@@ -30,6 +30,7 @@ def ai_turn(session_id: str):
         guess_id=result.get("guess_id"),
         guess_correct=result.get("guess_correct"),
         chat_history=session.get_chat_dicts(),
+        ai_candidates=sorted(session.ai_candidates),
     )
 
 
@@ -49,4 +50,5 @@ def human_answer(session_id: str, req: HumanAnswerRequest):
         eliminations=result["eliminations"],
         ai_remaining_count=result["ai_remaining_count"],
         chat_history=session.get_chat_dicts(),
+        ai_candidates=sorted(session.ai_candidates),
     )

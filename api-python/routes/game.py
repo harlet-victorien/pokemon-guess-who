@@ -44,6 +44,7 @@ def get_state(session_id: str):
         turn_number=session.turn_number,
         chat_history=session.get_chat_dicts(),
         ai_remaining_count=len(session.ai_candidates),
+        ai_candidates=sorted(session.ai_candidates),
         winner=session.winner,
         ai_secret_id=session.ai_secret_id if session.phase == "game_over" else None,
     )

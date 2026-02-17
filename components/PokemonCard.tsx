@@ -68,7 +68,7 @@ export function PokemonCard({
           <div className="absolute inset-0 bg-black/50 z-10" />
         )}
         
-        <div className="relative w-3/4 aspect-square z-0">
+        <div className="relative w-3/5 aspect-square z-0 flex-shrink-0">
           <Image
             src={sprite || "/placeholder.svg"}
             alt={displayName}
@@ -77,11 +77,11 @@ export function PokemonCard({
             unoptimized
           />
         </div>
-        
-        <span className={`text-xs font-medium capitalize mt-1 truncate w-full px-1 text-center z-0 ${flipped ? "text-muted-foreground" : "text-foreground"}`}>
+
+        <span className={`text-[10px] sm:text-xs font-medium capitalize mt-0.5 truncate w-full px-0.5 text-center z-0 leading-tight ${flipped ? "text-muted-foreground" : "text-foreground"}`}>
           {displayName}
         </span>
-        <span className={`text-[10px] z-0 ${flipped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
+        <span className={`text-[9px] sm:text-[10px] z-0 ${flipped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
           #{id}
         </span>
       </button>

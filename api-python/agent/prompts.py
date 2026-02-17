@@ -1,9 +1,12 @@
-"""Prompt templates for the AI agent and subagent."""
+"""Prompt templates for the AI agent and subagent — using LangChain ChatPromptTemplate."""
+
+from langchain_core.prompts import ChatPromptTemplate
 
 # AI only sees IDs and names — no types, no gen, no evo.
 # The subagent is the oracle for attribute knowledge.
 
-ORCHESTRATOR_ASK = """You are an AI player in a Pokemon Guess Who game. You are playing against a human.
+ORCHESTRATOR_ASK = ChatPromptTemplate.from_messages([
+    ("system", """You are an AI player in a Pokemon Guess Who game. You are playing against a human.
 
 ## Rules
 - There are 40 Pokemon on the board. Both you and the human have one secret Pokemon.
@@ -23,17 +26,24 @@ ORCHESTRATOR_ASK = """You are an AI player in a Pokemon Guess Who game. You are 
 {asked_questions}
 
 ## Instructions
-Call the `ask_question` tool with a NEW yes/no question you have NOT asked before.
-Vary your questions across different categories:
+You MUST call the `ask_question` tool with your yes/no question. Do NOT reply with plain text.
+
+Be CREATIVE and VARIED with your questions. Don't just ask about types — think like a real player:
+- Appearance: "Is your Pokemon mostly blue?", "Does it stand on two legs?", "Does it have a tail?"
+- Size/weight: "Is your Pokemon bigger than a dog?", "Could you carry it?"
+- Personality/vibe: "Does your Pokemon look scary?", "Is it cute?"
+- Habitat: "Would you find it in the ocean?", "Does it live underground?"
+- Abilities: "Can your Pokemon fly?", "Does it use electricity?"
 - Types: Fire, Water, Grass, Electric, Psychic, Ghost, Dragon, Dark, Steel, Fairy, Ice, Fighting, Poison, Ground, Rock, Bug, Normal, Flying
-- Generation: 1, 2, 3, 4, 5
+- Generation: 1 (Kanto), 2 (Johto), 3 (Hoenn), 4 (Sinnoh), 5 (Unova)
 - Evolution: basic, stage 1, stage 2, fully evolved
 - Dual typing: "Does it have two types?"
-- Physical: color, wings, legs, tail, size
-Pick a category you haven't explored yet.
-"""
+Avoid generic type questions early. Ask surprising, creative questions that a human would ask. Pick a category you haven't explored yet."""),
+    ("human", "Ask your yes/no question now."),
+])
 
-ORCHESTRATOR_GUESS = """You are an AI player in a Pokemon Guess Who game.
+ORCHESTRATOR_GUESS = ChatPromptTemplate.from_messages([
+    ("system", """You are an AI player in a Pokemon Guess Who game.
 
 ## Your Remaining Candidates ({candidate_count} left)
 {candidates_list}
@@ -42,11 +52,13 @@ ORCHESTRATOR_GUESS = """You are an AI player in a Pokemon Guess Who game.
 {qa_history}
 
 ## Instructions
-You have few candidates remaining. Make your best guess!
-Call the `guess_pokemon` tool with the ID of the Pokemon you think is the human's secret.
-"""
+You have few candidates remaining. Pick the one you think is the human's secret Pokemon.
+You MUST call the `guess_pokemon` tool with the Pokemon ID number. Do NOT reply with plain text."""),
+    ("human", "Make your guess now."),
+])
 
-SUBAGENT_ANSWER_HUMAN = """You are answering questions about a specific Pokemon in a Guess Who game.
+SUBAGENT_ANSWER_HUMAN = ChatPromptTemplate.from_messages([
+    ("human", """You are answering questions about a specific Pokemon in a Guess Who game.
 
 The secret Pokemon is: {pokemon_name} (ID: {pokemon_id})
 - Types: {pokemon_types}
@@ -54,30 +66,42 @@ The secret Pokemon is: {pokemon_name} (ID: {pokemon_id})
 - Evolution Stage: {pokemon_evo} (1=basic, 2=stage 1, 3=stage 2)
 - Physical Description: {pokemon_physical}
 
-The human player is asking a yes/no question about this Pokemon.
-You MUST answer with exactly one word: "yes" or "no".
-If the question is not a valid yes/no question about Pokemon attributes, answer "invalid".
+## Your Job
+The human player asks a question about this Pokemon.
+You MUST call the `answer_yes_no` tool with exactly "yes" or "no".
 
-Be accurate. Use ALL available information (types, stats, AND physical description) to answer.
-Common question categories:
-- Type questions: "Is it a Fire type?" → check if fire is in the types list
-- Generation: "Is it from Generation 1?" → check generation number
-- Evolution: "Is it fully evolved?" → stage 3 means fully evolved (if it has evolutions)
-- Dual type: "Does it have two types?" → check if types list has 2 entries
-- Appearance: "Is it blue?", "Does it have wings?" → use the physical description
+## How to Interpret Questions
+Re-read the question and figure out what Pokemon attribute it targets. Examples:
+- "can I hold that pokemon?" → Is it small/light enough to hold? Use physical description + general Pokemon knowledge (e.g. Pikachu=yes, Onix=no)
+- "is it cute?" → Use physical description and common Pokemon perception
+- "does it swim?" → Is it a Water type or known aquatic Pokemon?
+- "could it fly?" → Does it have wings, is it Flying type, or is it known to levitate?
+- "is it scary?" → Use physical description, types like Dark/Ghost/Dragon, and general perception
+- "is it big?" → Use physical description for size cues (tall, large, massive = yes)
+- "would it fit in a bag?" → Small Pokemon = yes, large Pokemon = no
+- "is it from Kanto?" → Generation 1 = yes
+- "has it evolved?" → Evolution stage 2 or 3 = yes
 
-Question: {question}
-Answer (yes/no/invalid):"""
+## Data to Use
+1. **Types** — for type-related questions
+2. **Generation** — for region/gen questions (Gen1=Kanto, Gen2=Johto, Gen3=Hoenn, Gen4=Sinnoh, Gen5=Unova)
+3. **Evolution Stage** — for evolution questions (1=basic/unevolved, 2=middle, 3=final)
+4. **Physical Description** — for ANY appearance, size, color, body part, or subjective quality question
 
-SUBAGENT_CHECK_CANDIDATES = """You are a Pokemon attribute oracle in a Guess Who game.
+If the physical description is missing, use your general Pokemon knowledge to answer.
+
+Question: {question}"""),
+])
+
+SUBAGENT_CHECK_CANDIDATES = ChatPromptTemplate.from_messages([
+    ("human", """You are a Pokemon attribute oracle in a Guess Who game.
 
 A yes/no question was asked: "{question}"
 
-Below is a list of Pokemon with their attributes and physical descriptions. For EACH Pokemon, answer whether the question applies to it (yes or no). Use ALL available information including the physical description.
+Below is a list of Pokemon with their attributes and physical descriptions. For EACH Pokemon, determine whether the question applies to it (yes or no). Use ALL available information including the physical description.
 
 {pokemon_table}
 
-Return ONLY a JSON object mapping Pokemon ID to "yes" or "no". No explanation, no markdown, just the JSON.
-Example: {{"1": "yes", "4": "no", "7": "yes"}}
-
-Answer:"""
+You MUST call the `evaluate_candidates` tool with a JSON string mapping Pokemon ID to "yes" or "no".
+Example: {{"1": "yes", "4": "no", "7": "yes"}}"""),
+])

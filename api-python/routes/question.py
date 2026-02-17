@@ -47,15 +47,14 @@ def human_guess(session_id: str, req: HumanGuessRequest):
             ChatMessage(role="system", content=f"{session.player_name} guessed correctly! It was Pokemon #{session.ai_secret_id}!")
         )
     else:
-        session.winner = session.ai_name
-        session.phase = "game_over"
+        # Wrong guess: stay on human_turn, just log it
         session.chat_history.append(
-            ChatMessage(role="system", content=f"{session.player_name} guessed wrong (#{req.pokemon_id})! The AI's secret was #{session.ai_secret_id}.")
+            ChatMessage(role="system", content=f"{session.player_name} guessed #{req.pokemon_id} — wrong!")
         )
 
     return HumanGuessResponse(
         correct=correct,
-        ai_secret_id=session.ai_secret_id,
+        ai_secret_id=session.ai_secret_id if correct else None,
         chat_history=session.get_chat_dicts(),
     )
 

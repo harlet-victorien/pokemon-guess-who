@@ -31,6 +31,7 @@ class GameStateResponse(BaseModel):
     turn_number: int
     chat_history: List[dict]
     ai_remaining_count: int
+    ai_candidates: List[int] = []
     winner: Optional[str] = None
     ai_secret_id: Optional[int] = None
 
@@ -53,12 +54,14 @@ class AiTurnResponse(BaseModel):
     guess_id: Optional[int] = None
     guess_correct: Optional[bool] = None
     chat_history: List[dict]
+    ai_candidates: List[int] = []
 
 
 class HumanAnswerResponse(BaseModel):
     eliminations: List[int]
     ai_remaining_count: int
     chat_history: List[dict]
+    ai_candidates: List[int] = []
 
 
 class HumanQuestionResponse(BaseModel):
@@ -68,5 +71,5 @@ class HumanQuestionResponse(BaseModel):
 
 class HumanGuessResponse(BaseModel):
     correct: bool
-    ai_secret_id: int
+    ai_secret_id: Optional[int] = None
     chat_history: List[dict]
