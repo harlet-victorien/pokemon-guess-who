@@ -1,3 +1,5 @@
+![Pokemon Guess Who](img/Agent.png)
+
 # Pokemon Guess Who 🎮
 
 A two-player online guessing game based on the classic "Guess Who?" game, featuring Pokemon from generations 1-5.
